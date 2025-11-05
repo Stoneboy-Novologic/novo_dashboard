@@ -72,17 +72,18 @@ The project includes a `vercel.json` file in the root directory with the followi
 ```json
 {
   "version": 2,
-  "buildCommand": "npx nx build app",
+  "buildCommand": "npx nx build app && cp -r apps/app/.next dist/apps/app/ 2>/dev/null || true",
   "installCommand": "npm install --legacy-peer-deps",
   "framework": "nextjs"
 }
 ```
 
-**Note**: The `outputDirectory` is intentionally omitted to allow Vercel's Next.js framework detection to automatically locate the `.next` folder and properly resolve `node_modules` paths. This is the recommended approach for Next.js deployments on Vercel.
+**Important**: The `outputDirectory` is intentionally omitted to allow Vercel's Next.js framework detection to automatically locate the `.next` folder and properly resolve `node_modules` paths. This prevents ENOENT errors for dependencies like `client-only`.
 
 This configuration ensures:
 - Nx builds the `app` project correctly
-- Output is directed to the correct directory
+- Vercel auto-detects Next.js build output in the correct location
+- `node_modules` paths resolve correctly from repository root
 - Next.js framework is properly detected
 
 ### .vercelignore
@@ -146,21 +147,22 @@ These are only needed for backend deployment (not in Vercel):
 
 **Solution**:
 1. **Do NOT specify `outputDirectory` in `vercel.json`** - Vercel will auto-detect Next.js build output
-2. Check that the build command completes successfully: `npx nx build app`
-3. Verify that `.next` folder is created (either in `apps/app/.next` or `dist/apps/app/.next`)
-4. Ensure `framework: "nextjs"` is set in `vercel.json` to enable automatic detection
-5. In Vercel dashboard → Settings → General → Root Directory: Leave as `/` (root of monorepo)
+2. Check that the build command completes successfully: `npx nx build app && cp -r apps/app/.next dist/apps/app/ 2>/dev/null || true`
+3. Ensure `apps/app/project.json` has correct `outputPath` setting (`dist/apps/app`)
+4. Verify that `.next` folder is created in `dist/apps/app/.next` after build
+5. Ensure `framework: "nextjs"` is set in `vercel.json` to enable automatic detection
 
 ### Routes Manifest Not Found
 
 **Problem**: Error: "The file routes-manifest.json couldn't be found"
 
 **Solution**:
-1. **Do NOT specify `outputDirectory` in `vercel.json`** - Let Vercel's Next.js framework detection automatically locate the `.next` folder
-2. In Vercel dashboard → Settings → General → Root Directory: Leave as `/` (don't change to `apps/app`)
-3. Verify the build completes successfully and check build logs for `.next` folder creation
+1. **Do NOT specify `outputDirectory` in `vercel.json`** - Vercel will auto-detect Next.js build output
+2. Check that the build command completes successfully: `npx nx build app && cp -r apps/app/.next dist/apps/app/ 2>/dev/null || true`
+3. Verify that `.next` folder is created (either in `apps/app/.next` or `dist/apps/app/.next`)
 4. Ensure `framework: "nextjs"` is set in `vercel.json` to enable automatic detection
-5. **Note**: Omitting `outputDirectory` allows Vercel to properly resolve `node_modules` paths and find Next.js build artifacts automatically
+5. In Vercel dashboard → Settings → General → Root Directory: Leave as `/` (root of monorepo)
+6. **Note**: Omitting `outputDirectory` allows Vercel to properly resolve `node_modules` paths and find Next.js build artifacts automatically
 
 ### Node Modules Not Found (ENOENT errors)
 
