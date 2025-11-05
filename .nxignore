@@ -1,0 +1,11 @@
+# Nx ignore file
+node_modules
+dist
+.next
+.nx
+coverage
+.vercel
+*.log
+.DS_Store
+.env.local
+.env.*.local
