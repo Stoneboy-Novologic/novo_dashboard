@@ -31,7 +31,7 @@ construction-management-v1/
 
 ### Prerequisites
 
-- Node.js 18+ and npm/pnpm
+- Node.js 18+ and npm
 - PostgreSQL database
 - Nx CLI (optional, but recommended)
 
@@ -40,8 +40,6 @@ construction-management-v1/
 1. Install dependencies:
 ```bash
 npm install
-# or
-pnpm install
 ```
 
 2. Set up environment variables:

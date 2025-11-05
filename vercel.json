@@ -2,6 +2,6 @@
   "version": 2,
   "buildCommand": "npx nx build app",
   "outputDirectory": "dist/apps/app/.next",
-  "installCommand": "pnpm install",
+  "installCommand": "npm install --legacy-peer-deps",
   "framework": "nextjs"
 }

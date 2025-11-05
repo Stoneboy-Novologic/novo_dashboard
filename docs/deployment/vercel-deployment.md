@@ -36,8 +36,8 @@ Vercel should auto-detect Next.js, but you may need to configure the following:
 #### Build Settings
 - **Root Directory**: Leave as `/` (root of monorepo) - **IMPORTANT**: Do not change this to `apps/app`
 - **Build Command**: `npx nx build app`
-- **Output Directory**: `dist/apps/app`
-- **Install Command**: `npm install` (or `pnpm install` if you're using pnpm)
+- **Output Directory**: `dist/apps/app/.next`
+- **Install Command**: `npm install --legacy-peer-deps`
 
 #### Environment Variables
 Click "Environment Variables" and add the following:
@@ -73,8 +73,8 @@ The project includes a `vercel.json` file in the root directory with the followi
 {
   "version": 2,
   "buildCommand": "npx nx build app",
-  "outputDirectory": "dist/apps/app",
-  "installCommand": "npm install",
+  "outputDirectory": "dist/apps/app/.next",
+  "installCommand": "npm install --legacy-peer-deps",
   "framework": "nextjs"
 }
 ```
@@ -188,7 +188,7 @@ Each pull request gets its own preview URL for testing.
 
 - Nx caching is automatically used
 - Vercel caches `node_modules` between deployments
-- Consider using `pnpm` for faster installs (update `installCommand` in `vercel.json`)
+- The `--legacy-peer-deps` flag is used to handle dependency resolution issues
 
 ### Runtime Optimization
 
