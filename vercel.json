@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "npx nx build app && cp -r apps/app/.next dist/apps/app/ 2>/dev/null || true",
+  "buildCommand": "npx nx build app",
+  "outputDirectory": "dist/apps/app",
   "installCommand": "npm install --legacy-peer-deps",
   "framework": "nextjs"
 }
