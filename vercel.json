@@ -5,4 +5,3 @@
   "installCommand": "pnpm install",
   "framework": "nextjs"
 }
-
