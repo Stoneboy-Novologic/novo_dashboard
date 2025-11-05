@@ -16,9 +16,9 @@ import {
   DollarSign,
   AlertTriangle,
   FileCheck,
+  Layers,
 } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
 import { usePathname } from "next/navigation"
 
 interface SidebarProps {
@@ -33,6 +33,7 @@ export function Sidebar({ isOpen, isCollapsed, onToggle, onCollapse }: SidebarPr
 
   const navItems = [
     { icon: Home, label: "Dashboard", href: "/" },
+    { icon: Layers, label: "Modules", href: "/modules" },
     { icon: BarChart3, label: "Projects", href: "/projects" },
     { icon: MessageSquare, label: "Chat", href: "/chat" },
     { icon: CheckSquare, label: "Tasks", href: "/tasks" },
@@ -63,20 +64,13 @@ export function Sidebar({ isOpen, isCollapsed, onToggle, onCollapse }: SidebarPr
         {/* Header with Logo */}
         <div className="p-4 border-b border-border flex items-center justify-between flex-shrink-0">
           {!isCollapsed && (
-            <div className="flex items-center gap-3 flex-1">
-              <div className="relative w-full h-10 overflow-hidden">
-                <Image
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Novologic%20Logo_Grayscale%20on%20Transparent_Wix%20v3-U2e4bIcqPbFLisxOpSN4HyrsYxndTZ.png"
-                  alt="App Logo"
-                  fill
-                  sizes="256px"
-                  className="object-contain"
-                  priority
-                  onError={(e) => {
-                    console.error("Sidebar logo failed to load:", e)
-                    ;(e.currentTarget as HTMLImageElement).src = "/placeholder-logo.png"
-                  }}
-                />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-primary-foreground font-bold text-lg font-heading">C</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-foreground font-heading">ConstructHub</h1>
+                <p className="text-xs text-muted-foreground">v0.1</p>
               </div>
             </div>
           )}
@@ -123,7 +117,6 @@ export function Sidebar({ isOpen, isCollapsed, onToggle, onCollapse }: SidebarPr
                 } ${isCollapsed ? "justify-center" : ""}`}
                 title={isCollapsed ? item.label : undefined}
                 onClick={() => {
-                  // Close mobile sidebar after navigation
                   if (isOpen) onToggle(false)
                 }}
               >
