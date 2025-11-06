@@ -29,7 +29,9 @@ import { DB_CONFIG } from '@construction-mgmt/shared/config';
       useFactory: (configService: ConfigService) => {
         console.log('[DatabaseModule] Configuring TypeORM connection...');
         console.log('[DatabaseModule] Database host:', DB_CONFIG.HOST);
+        console.log('[DatabaseModule] Database port:', DB_CONFIG.PORT);
         console.log('[DatabaseModule] Database name:', DB_CONFIG.DATABASE);
+        console.log('[DatabaseModule] Database user:', DB_CONFIG.USERNAME);
         
         return {
           type: 'postgres',
@@ -43,6 +45,17 @@ import { DB_CONFIG } from '@construction-mgmt/shared/config';
           ],
           synchronize: DB_CONFIG.SYNCHRONIZE, // Only true in development
           logging: DB_CONFIG.LOGGING,
+          // Docker-compatible connection settings
+          // Retry connection logic for Docker (database might take time to start)
+          connectTimeoutMS: 60000, // 60 seconds connection timeout
+          retryAttempts: 5, // Retry connection attempts
+          retryDelay: 3000, // 3 seconds between retries
+          // Connection pool settings for Docker/production
+          extra: {
+            max: 10, // Maximum number of connections in pool
+            min: 2, // Minimum number of connections in pool
+            idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
+          },
           // migrations: [__dirname + '/../migrations/**/*{.ts,.js}'],
           // migrationsRun: true,
         };

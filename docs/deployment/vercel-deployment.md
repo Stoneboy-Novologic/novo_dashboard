@@ -73,16 +73,11 @@ The project includes a `vercel.json` file in the root directory with the followi
 {
   "version": 2,
   "buildCommand": "npx nx build app",
-  "outputDirectory": "dist/apps/app",
+  "outputDirectory": "dist/apps/app/.next",
   "installCommand": "npm install --legacy-peer-deps",
   "framework": "nextjs"
 }
 ```
-
-**Important Configuration Notes:**
-- `outputDirectory` is set to `dist/apps/app` (parent of `.next` folder) to allow correct `node_modules` path resolution
-- Vercel's Next.js framework detection automatically finds `.next/routes-manifest.json` inside the outputDirectory
-- The `outputFileTracingRoot` in `next.config.mjs` ensures proper file tracing from the repository root
 
 This configuration ensures:
 - Nx builds the `app` project correctly
@@ -149,34 +144,19 @@ These are only needed for backend deployment (not in Vercel):
 **Problem**: Vercel cannot find the build output.
 
 **Solution**:
-1. Verify `Output Directory` is set to `dist/apps/app` (parent directory containing `.next`)
+1. Verify `Output Directory` is set to `dist/apps/app/.next`
 2. Check that the build command completes successfully
-3. Ensure `apps/app/project.json` has correct `outputPath` setting (`dist/apps/app`)
+3. Ensure `apps/app/project.json` has correct `outputPath` setting
 
 ### Routes Manifest Not Found
 
 **Problem**: Error: "The file routes-manifest.json couldn't be found"
 
 **Solution**:
-1. Ensure `outputDirectory` in `vercel.json` is set to `dist/apps/app` (parent directory containing `.next` folder)
-2. Verify `framework: "nextjs"` is set in `vercel.json` - this enables automatic detection of `.next/routes-manifest.json`
-3. In Vercel dashboard → Settings → General → Root Directory: Leave as `/` (don't change to `apps/app`)
-4. Verify the build completes successfully and check build logs for `.next` folder creation in `dist/apps/app/.next`
-5. Ensure `outputFileTracingRoot` is configured in `apps/app/next.config.mjs` for monorepo support
-6. **Note**: Setting `outputDirectory` to `dist/apps/app` (not `.next`) allows both:
-   - Vercel to auto-detect `.next/routes-manifest.json` inside the outputDirectory
-   - Correct resolution of `node_modules` paths (which are at repository root)
-
-### Node Modules Not Found (ENOENT errors)
-
-**Problem**: Error: "ENOENT: no such file or directory, lstat '/vercel/path0/dist/node_modules/client-only/index.js'"
-
-**Solution**:
-1. Ensure `outputDirectory` in `vercel.json` is set to `dist/apps/app` (NOT `dist/apps/app/.next`)
-2. Setting it to the parent directory allows Next.js to correctly resolve relative paths like `../../../node_modules/` from `.next` to the repository root
-3. Verify `outputFileTracingRoot` is configured in `apps/app/next.config.mjs` pointing to repository root
-4. The `node_modules` folder must exist at the repository root (not in `dist`)
-5. Ensure `framework: "nextjs"` is set in `vercel.json` for proper path resolution
+1. Ensure `Output Directory` in Vercel dashboard is set to `dist/apps/app/.next`
+2. In Vercel dashboard → Settings → General → Root Directory: Leave as `/` (don't change to `apps/app`)
+3. Verify the build completes successfully and check build logs for `.next` folder creation
+4. If issue persists, try setting `Output Directory` to `dist/apps/app` in Vercel dashboard (not vercel.json) and let Vercel auto-detect
 
 ### Environment Variables Not Working
 

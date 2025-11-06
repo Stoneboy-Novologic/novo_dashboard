@@ -39,12 +39,32 @@ async function bootstrap() {
   app.use(helmet());
 
   // Enable CORS - Configure based on your frontend URL
+  // Docker-compatible: Supports multiple origins (comma-separated) and Docker network scenarios
   console.log('[main] Configuring CORS...');
+  const corsOrigins = process.env.CORS_ORIGIN?.split(',').map(origin => origin.trim()) || ['http://localhost:3000'];
+  console.log('[main] CORS origins:', corsOrigins);
   app.enableCors({
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Check if origin is in allowed list
+      if (corsOrigins.includes(origin) || corsOrigins.includes('*')) {
+        callback(null, true);
+      } else {
+        // In development, allow localhost variants
+        if (process.env.NODE_ENV !== 'production' && 
+            (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1'))) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
   });
 
   // Global validation pipe - Automatically validates all incoming requests

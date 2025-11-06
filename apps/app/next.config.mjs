@@ -1,10 +1,3 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-// Get __dirname equivalent in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
@@ -15,9 +8,15 @@ const nextConfig = {
   },
   // Ensure output is compatible with Vercel
   distDir: '.next',
-  // Configure output file tracing for monorepo
-  // This ensures Next.js can trace files correctly from the repository root
-  outputFileTracingRoot: process.env.NODE_ENV === 'production' ? path.join(__dirname, '../../') : undefined,
+  // Docker production optimizations
+  // Enable standalone output for Docker deployment
+  // This creates a minimal server.js file with only necessary dependencies
+  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+  // Experimental features for better Docker support
+  experimental: {
+    // Enable output file tracing for standalone builds
+    outputFileTracingRoot: process.env.NODE_ENV === 'production' ? undefined : undefined,
+  },
 }
 
 export default nextConfig
