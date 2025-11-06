@@ -178,6 +178,62 @@ check_prerequisites() {
 }
 
 # ============================================================================
+# Optional Cleanup (Docker cache, logs)
+# ============================================================================
+
+prompt_cleanup_frontend() {
+    log_step "Optional Cleanup (free disk space)"
+    
+    local dangling_images=$(sudo docker images -f "dangling=true" -q | wc -l | tr -d ' ')
+    local containers_exited=$(sudo docker ps -aq -f status=exited | wc -l | tr -d ' ')
+    local logs_count=$(ls -1 /tmp/frontend-deployment-*.log 2>/dev/null | wc -l | tr -d ' ')
+    local logs_size=$(du -ch /tmp/frontend-deployment-*.log 2>/dev/null | tail -n1 | awk '{print $1}')
+    
+    log_info "Detected:"
+    log_info "  - Dangling images: ${dangling_images}"
+    log_info "  - Exited containers: ${containers_exited}"
+    log_info "  - Frontend deploy logs: ${logs_count} (total ~${logs_size:-0})"
+    echo ""
+    echo -e "${BOLD}Choose cleanup actions (multiple allowed, comma-separated):${NC}"
+    echo -e "  ${CYAN}1${NC}) Remove dangling images (safe)"
+    echo -e "  ${CYAN}2${NC}) Remove exited containers (safe)"
+    echo -e "  ${CYAN}3${NC}) Prune build cache (safe)"
+    echo -e "  ${CYAN}4${NC}) Delete frontend deployment logs in /tmp"
+    echo -e "  ${CYAN}0${NC}) Skip cleanup"
+    echo ""
+    read -p "Enter your choice(s) [e.g., 1,3 or 0]: " choices
+    
+    IFS=',' read -r -a arr <<< "$choices"
+    for choice in "${arr[@]}"; do
+        choice=$(echo "$choice" | xargs)
+        case "$choice" in
+            1)
+                log_substep "Pruning dangling images..."
+                sudo docker image prune -f || true
+                ;;
+            2)
+                log_substep "Removing exited containers..."
+                sudo docker rm $(sudo docker ps -aq -f status=exited) 2>/dev/null || true
+                ;;
+            3)
+                log_substep "Pruning build cache..."
+                sudo docker builder prune -f || true
+                ;;
+            4)
+                log_substep "Deleting frontend deployment logs in /tmp..."
+                sudo rm -f /tmp/frontend-deployment-*.log 2>/dev/null || true
+                ;;
+            0)
+                log_info "Skipping cleanup"
+                ;;
+            *)
+                ;;
+        esac
+    done
+    echo ""
+}
+
+# ============================================================================
 # Setup Deployment Directory
 # ============================================================================
 
@@ -452,6 +508,7 @@ main() {
     
     # Run deployment steps
     check_prerequisites
+    prompt_cleanup_frontend
     setup_deployment_directory
     update_environment_file
     build_frontend_image
