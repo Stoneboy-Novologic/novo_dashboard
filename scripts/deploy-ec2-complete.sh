@@ -289,6 +289,98 @@ setup_deployment_directory() {
         error_exit "Please run this script from the project root directory"
     fi
     
+    # Check if deployment directory already exists
+    if [ -d "$DEPLOY_DIR" ]; then
+        log_warning "Deployment directory already exists: $DEPLOY_DIR"
+        echo ""
+        echo -e "${BOLD}${YELLOW}⚠ Previous deployment detected!${NC}"
+        echo ""
+        echo -e "The deployment directory already exists from a previous run."
+        echo -e "This may contain old data, containers, and configurations."
+        echo ""
+        echo -e "${BOLD}What would you like to do?${NC}"
+        echo ""
+        echo -e "  ${CYAN}1)${NC} ${BOLD}Clean and recreate${NC} - Remove all old data and start fresh"
+        echo -e "      ${YELLOW}⚠ This will:${NC}"
+        echo -e "         • Stop and remove all existing containers"
+        echo -e "         • Remove all volumes (database data will be lost!)"
+        echo -e "         • Delete the entire deployment directory"
+        echo -e "         • Start with a clean slate"
+        echo ""
+        echo -e "  ${CYAN}2)${NC} ${BOLD}Continue anyway${NC} - Keep existing directory and update files"
+        echo -e "      ${YELLOW}⚠ This will:${NC}"
+        echo -e "         • Keep existing containers and data"
+        echo -e "         • Overwrite configuration files"
+        echo -e "         • May cause conflicts if containers are running"
+        echo ""
+        echo -e "  ${CYAN}3)${NC} ${BOLD}Abort${NC} - Exit without making any changes"
+        echo ""
+        
+        while true; do
+            read -p "$(echo -e ${BOLD}Enter your choice [1/2/3]: ${NC})" choice
+            case $choice in
+                1)
+                    log_substep "Cleaning existing deployment directory..."
+                    
+                    # Stop and remove containers if they exist
+                    if [ -f "$DEPLOY_DIR/docker-compose.prod.yml" ]; then
+                        log_substep "Stopping existing containers..."
+                        cd "$DEPLOY_DIR" 2>/dev/null || true
+                        sudo docker-compose -f docker-compose.prod.yml down -v 2>/dev/null || {
+                            log_warning "Some containers may not have stopped cleanly"
+                        }
+                        cd "$PROJECT_ROOT"
+                    fi
+                    
+                    # Remove Docker volumes (database data, uploads, etc.)
+                    log_substep "Removing Docker volumes..."
+                    sudo docker volume rm construction-mgmt-postgres-data-prod 2>/dev/null || true
+                    sudo docker volume rm construction-mgmt-postgres-backups 2>/dev/null || true
+                    sudo docker volume rm construction-mgmt-api-uploads-prod 2>/dev/null || true
+                    
+                    # Remove the directory
+                    log_substep "Removing deployment directory..."
+                    sudo rm -rf "$DEPLOY_DIR"
+                    
+                    log_success "Existing deployment cleaned. Starting fresh deployment."
+                    break
+                    ;;
+                2)
+                    log_warning "Continuing with existing directory..."
+                    
+                    # Backup existing .env files if they exist
+                    if [ -f "$DEPLOY_DIR/.env.production" ]; then
+                        log_substep "Backing up existing .env.production..."
+                        backup_file="$DEPLOY_DIR/.env.production.backup.$(date +%Y%m%d_%H%M%S)"
+                        sudo cp "$DEPLOY_DIR/.env.production" "$backup_file" 2>/dev/null || true
+                        log_info "Backup saved to: $backup_file"
+                    fi
+                    
+                    # Stop containers to avoid conflicts
+                    if [ -f "$DEPLOY_DIR/docker-compose.prod.yml" ]; then
+                        log_substep "Stopping existing containers to avoid conflicts..."
+                        cd "$DEPLOY_DIR" 2>/dev/null || true
+                        sudo docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+                        cd "$PROJECT_ROOT"
+                    fi
+                    
+                    log_warning "Files in existing directory will be overwritten."
+                    break
+                    ;;
+                3)
+                    log_info "Deployment aborted by user."
+                    echo ""
+                    echo -e "${GREEN}No changes were made.${NC}"
+                    exit 0
+                    ;;
+                *)
+                    echo -e "${RED}Invalid choice. Please enter 1, 2, or 3.${NC}"
+                    ;;
+            esac
+        done
+        echo ""
+    fi
+    
     log_substep "Creating deployment directory: $DEPLOY_DIR"
     sudo mkdir -p "$DEPLOY_DIR"
     
