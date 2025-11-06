@@ -46,6 +46,7 @@
     "docker:ps": "docker-compose ps",
     "docker:ps:prod": "docker-compose -f docker-compose.prod.yml ps",
     "deploy:ec2": "./scripts/deploy-ec2.sh",
+    "deploy:ec2:complete": "./scripts/deploy-ec2-complete.sh",
     "health:check": "./scripts/health-check.sh",
     "health:check:remote": "./scripts/health-check.sh --remote"
   },
