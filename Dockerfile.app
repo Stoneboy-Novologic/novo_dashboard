@@ -70,13 +70,11 @@ ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NODE_ENV=production
 ENV DOCKER_BUILD=true
+ENV NEXT_PRIVATE_SKIP_TURBO=1
 
 # Build the Next.js application using Nx
 # This builds the app and all its dependencies
-# DOCKER_BUILD env var is set so next.config.mjs knows to use /app as turbopack root
 RUN echo "[Dockerfile.app] Building Next.js application..." && \
-    echo "[Dockerfile.app] Workspace root: /app" && \
-    echo "[Dockerfile.app] App directory: /app/apps/app" && \
     npx nx build app --skip-nx-cache && \
     echo "[Dockerfile.app] Build completed successfully"
 

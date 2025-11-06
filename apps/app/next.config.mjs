@@ -14,20 +14,5 @@ const nextConfig = {
   output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
 }
 
-// Turbopack configuration for Nx monorepo
-// Set root to workspace root where node_modules is located
-// This fixes the issue where Turbopack can't find Next.js package
-if (process.env.NODE_ENV === 'production') {
-  nextConfig.experimental = {
-    ...nextConfig.experimental,
-    // Set turbopack root to workspace root
-    // In Docker: /app (absolute path to workspace root)
-    // In local dev: ../../ (relative path from apps/app to workspace root)
-    turbopack: {
-      root: process.env.DOCKER_BUILD === 'true' ? '/app' : '../../',
-    },
-  }
-}
-
 export default nextConfig
   
