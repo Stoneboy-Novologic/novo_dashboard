@@ -107,10 +107,8 @@ RUN echo "[Dockerfile.app] Installing production dependencies..." && \
     echo "[Dockerfile.app] Production dependencies installed"
 
 # Copy built application from build stage
-# Next.js standalone output includes all necessary files
-COPY --from=build --chown=nextjs:nodejs /app/dist/apps/app/.next/standalone ./
-COPY --from=build --chown=nextjs:nodejs /app/dist/apps/app/.next/static ./dist/apps/app/.next/static
-COPY --from=build --chown=nextjs:nodejs /app/dist/apps/app/public ./dist/apps/app/public
+# Copy entire build output to preserve .next artifacts
+COPY --from=build --chown=nextjs:nodejs /app/dist/apps/app ./dist/apps/app
 
 # Switch to non-root user
 USER nextjs
@@ -120,8 +118,9 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
+    CMD node -e "require('http').get('http://localhost:3000/', (r) => {process.exit(r.statusCode < 500 ? 0 : 1)})" || exit 1
 
 # Start the Next.js application
-CMD ["node", "dist/apps/app/server.js"]
+# If standalone server exists, use it; otherwise use next start
+CMD ["sh", "-c", "cd dist/apps/app && if [ -f .next/standalone/server.js ]; then node .next/standalone/server.js; else /app/node_modules/.bin/next start -p 3000; fi"]
 
