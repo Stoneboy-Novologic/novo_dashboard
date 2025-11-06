@@ -14,5 +14,13 @@ const nextConfig = {
   output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
 }
 
+// Configure Turbopack workspace root so it can resolve node_modules in Nx monorepo
+if (process.env.DOCKER_BUILD === 'true') {
+  // In Docker, workspace root is /app
+  nextConfig.turbopack = {
+    root: '/app',
+  }
+}
+
 export default nextConfig
   
