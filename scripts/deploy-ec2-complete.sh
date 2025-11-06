@@ -12,16 +12,19 @@
 #   1. Checks prerequisites and system requirements
 #   2. Installs Docker and Docker Compose (if needed)
 #   3. Sets up the deployment directory
-#   4. Creates production environment file with secure values
-#   5. Builds Docker images
-#   6. Starts all services
-#   7. Runs health checks
-#   8. Displays deployment summary
+#   4. Generates package-lock.json with --legacy-peer-deps (if needed)
+#   5. Creates production environment file with secure values
+#   6. Builds Docker images (all npm commands use --legacy-peer-deps)
+#   7. Starts all services
+#   8. Runs health checks
+#   9. Displays deployment summary
 #
 # Requirements:
 #   - Run on EC2 instance (Ubuntu 20.04+ or Amazon Linux 2+)
 #   - Run from project root directory
 #   - Internet connection for downloading dependencies
+#
+# Note: All npm install/ci commands use --legacy-peer-deps flag for compatibility
 
 set -euo pipefail  # Exit on error, undefined vars, pipe failures
 
@@ -299,6 +302,21 @@ setup_deployment_directory() {
     fi
     
     cd "$DEPLOY_DIR"
+    
+    # Generate package-lock.json if it doesn't exist (using --legacy-peer-deps)
+    if [ ! -f "package-lock.json" ]; then
+        log_substep "package-lock.json not found. Generating with --legacy-peer-deps..."
+        if command_exists npm; then
+            npm install --legacy-peer-deps --package-lock-only 2>&1 | tee -a "$LOG_FILE" || {
+                log_warning "Failed to generate package-lock.json. Docker build will handle it."
+            }
+        else
+            log_warning "npm not found on host. Docker build will handle package-lock.json generation."
+        fi
+    else
+        log_success "package-lock.json found"
+    fi
+    
     log_success "Deployment directory ready: $DEPLOY_DIR"
 }
 
@@ -392,14 +410,15 @@ build_docker_images() {
     
     cd "$DEPLOY_DIR"
     
-    log_substep "Building API image..."
+    log_substep "Building API image (using --legacy-peer-deps for npm)..."
+    log_info "Note: All npm commands in Dockerfiles use --legacy-peer-deps flag"
     if sudo docker build -f Dockerfile.api -t construction-mgmt-api:latest . 2>&1 | tee -a "$LOG_FILE"; then
         log_success "API image built successfully"
     else
-        error_exit "Failed to build API image"
+        error_exit "Failed to build API image. Check logs for details."
     fi
     
-    log_substep "Building App image..."
+    log_substep "Building App image (using --legacy-peer-deps for npm)..."
     local ec2_ip=$(get_ec2_ip)
     if sudo docker build \
         --build-arg NEXT_PUBLIC_API_URL="http://${ec2_ip}:3001" \
@@ -407,10 +426,10 @@ build_docker_images() {
         -t construction-mgmt-app:latest . 2>&1 | tee -a "$LOG_FILE"; then
         log_success "App image built successfully"
     else
-        error_exit "Failed to build App image"
+        error_exit "Failed to build App image. Check logs for details."
     fi
     
-    log_success "All Docker images built successfully"
+    log_success "All Docker images built successfully (with --legacy-peer-deps)"
 }
 
 # ============================================================================
